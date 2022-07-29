@@ -29,6 +29,7 @@ const uint16_t websockets_server_port = 8081; // Enter server port
 using namespace websockets;
 
 unsigned long lastUpdate = millis();
+unsigned long lastUpdate2 = millis();
 unsigned long lastUpdate15 = millis();
 
 String output;
@@ -47,6 +48,8 @@ boolean messageFBL = true;
 boolean messageFBR = true;
 float messageL = 0;
 float messageR = 0;
+float messageLT = 0;
+float messageRT = 0;
 // int posMessage = 90;
 // int posMessage2 = 90;
 int accel = 1;
@@ -54,8 +57,8 @@ int accel = 1;
 WebsocketsClient client;
 
 void onMessageCallback(WebsocketsMessage messageSocket) {
-    Serial.print("Got Message: ");
-    Serial.println(messageSocket.data());
+    //Serial.print("Got Message: ");
+    //Serial.println(messageSocket.data());
 
     DeserializationError error = deserializeJson(doc, messageSocket.data());
     if (error) {
@@ -98,6 +101,25 @@ void onMessageCallback(WebsocketsMessage messageSocket) {
         //     stop = 0;
         // }
     }
+
+    if(String(method) == "messagesLTRT"){
+        messageLT = doc["messageLT"];
+        messageRT = doc["messageRT"];
+        // if(messageL < 0){
+        //     messageL = (messageL * speed) * -1;
+        // }else{messageL = messageL * speed;}
+        //messageR = doc["messageR"];
+        messageL = messageLT*255;
+        messageR = messageRT*255;
+        Serial.printf("LT = %s\n", String(messageL));
+        Serial.printf("RT = %s\n", String(messageR));
+        // doc2["method"] = "messagesL";
+        // doc2["messageL"] = messageL;
+        // doc2["messageR"] = messageR;
+        // String output = doc2.as<String>();
+        // client.send(output);
+    }
+
     if(String(method) == "messagesL"){
         stop = doc["stop"];
         accel = doc["accel"];
@@ -106,8 +128,8 @@ void onMessageCallback(WebsocketsMessage messageSocket) {
             messageL = (messageL * speed) * -1;
         }else{messageL = messageL * speed;}
         //messageR = doc["messageR"];
-        Serial.printf("messageL = %s\n", String(messageL));
-        Serial.printf("messageR = %s\n", String(messageR));
+        Serial.printf("Left = %s\n", String(messageL));
+        Serial.printf("Right = %s\n", String(messageR));
         doc2["method"] = "messagesL";
         doc2["messageL"] = messageL;
         doc2["messageR"] = messageR;
@@ -123,8 +145,8 @@ void onMessageCallback(WebsocketsMessage messageSocket) {
         if(messageR < 0){
             messageR = (messageR * speed) * -1;
         }else{messageR = messageR * speed;}
-        Serial.printf("messageL = %s\n", String(messageL));
-        Serial.printf("messageR = %s\n", String(messageR));
+        Serial.printf("Left = %s\n", String(messageL));
+        Serial.printf("Right = %s\n", String(messageR));
         doc2["method"] = "messagesR";
         doc2["messageL"] = messageL;
         doc2["messageR"] = messageR;
@@ -136,7 +158,7 @@ void onMessageCallback(WebsocketsMessage messageSocket) {
         messageOnOff = doc["messageOnOff"];
         doc2["method"] = "messagesOnOff";
         doc2["messageOnOff"] = messageOnOff;
-        Serial.printf("messageOnOff = %s\n", String(messageOnOff));
+        Serial.printf("OnOff = %s\n", String(messageOnOff));
         String output = doc2.as<String>();
         client.send(output);
         digitalWrite(ONOFF, messageOnOff);
@@ -145,7 +167,7 @@ void onMessageCallback(WebsocketsMessage messageSocket) {
         messageStop = doc["messageStop"];
         doc2["method"] = "messagesStop";
         doc2["messageStop"] = messageStop;
-        Serial.printf("messageStop = %s\n", String(messageStop));
+        Serial.printf("Stop = %s\n", String(messageStop));
         String output = doc2.as<String>();
         client.send(output);
         digitalWrite(STOP, messageStop);
@@ -154,7 +176,7 @@ void onMessageCallback(WebsocketsMessage messageSocket) {
         messageFBL = doc["messageFBL"];
         doc2["method"] = "messagesFBL";
         doc2["messageFBL"] = messageFBL;
-        Serial.printf("messageFBL = %s\n", String(messageFBL));
+        Serial.printf("UpDownLeft = %s\n", String(messageFBL));
         String output = doc2.as<String>();
         client.send(output);
         digitalWrite(FBL, messageFBL);
@@ -163,7 +185,7 @@ void onMessageCallback(WebsocketsMessage messageSocket) {
         messageFBR = doc["messageFBR"];
         doc2["method"] = "messagesFBR";
         doc2["messageFBR"] = messageFBR;
-        Serial.printf("messageFBR = %s\n", String(messageFBR));
+        Serial.printf("UpDownRight = %s\n", String(messageFBR));
         String output = doc2.as<String>();
         client.send(output);
         digitalWrite(FBL, messageFBR);
@@ -261,8 +283,8 @@ void loop(){
     client.poll();
 
     if (WiFi.status() != WL_CONNECTED) {
-        Serial.println("WiFi.reconnect()-----------------------------------");
-        Serial.println("WiFi.reconnect()-----------------------------------");
+        // Serial.println("WiFi.reconnect()-----------------------------------");
+        // Serial.println("WiFi.reconnect()-----------------------------------");
         //WiFi.disconnect();
         //WiFi.reconnect();
         ESP.restart();
@@ -276,11 +298,20 @@ void loop(){
 
     if (lastUpdate + messageInterval < millis()){
         if (connected == false){
-            Serial.printf(", connected =================================== %s\n", String(connected));
+            // Serial.printf(", connected =================================== %s\n", String(connected));
             socketSetup();
         };
         lastUpdate = millis();
     };
+
+
+    if (lastUpdate2 + 2000 < millis()){  
+        messageL = 0;
+        messageR = 0;
+        Serial.println("astUpdate2");
+        lastUpdate2 = millis();
+    };
+
 
     if (lastUpdate15 + 10000 < millis()){
         Serial.printf("millis() = %s", String(millis()));
