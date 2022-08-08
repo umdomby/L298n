@@ -31,6 +31,7 @@ using namespace websockets;
 
 unsigned long lastUpdate = millis();
 unsigned long lastUpdate2 = millis();
+unsigned long lastUpdate10 = millis();
 unsigned long lastUpdate15 = millis();
 
 String output;
@@ -84,8 +85,10 @@ void onMessageCallback(WebsocketsMessage messageSocket) {
     };
 
     if(String(method) == "messagesLTRT"){
+        digitalWrite(ONOFF, LOW);
         messageL = doc["messageL"];
         messageR = doc["messageR"];
+        lastUpdate10 = millis();
         Serial.printf("LT = %s\n", String(messageL));
         Serial.printf("RT = %s\n", String(messageR));
     };
@@ -204,10 +207,10 @@ void setup() {
     pinMode(FBLL,OUTPUT);
     pinMode(FBRR,OUTPUT);
 
-    digitalWrite(FBL, LOW);
-    digitalWrite(FBR, LOW);
-    digitalWrite(FBLL, LOW);
-    digitalWrite(FBRR, LOW);
+    digitalWrite(FBL, HIGH);
+    digitalWrite(FBR, HIGH);
+    digitalWrite(FBLL, HIGH);
+    digitalWrite(FBRR, HIGH);
 
     pinMode(ONOFF, OUTPUT);
     digitalWrite(ONOFF, HIGH);
@@ -270,12 +273,22 @@ void loop(){
     };
 
 
-    if (lastUpdate2 + 2000 < millis()){  
+    if (lastUpdate2 + 2000 < millis()){ 
         messageL = 0;
         messageR = 0;
         Serial.println("lastUpdate2");
-        lastUpdate2 = millis();
+        //lastUpdate2 = millis();
     };
+
+    if (lastUpdate10 + 10000 < millis()){
+        digitalWrite(ONOFF, HIGH); 
+        messageL = 0;
+        messageR = 0;
+        Serial.println("lastUpdate10");
+        //lastUpdate10 = millis();
+    };
+
+    messageOnOff = doc["messageOnOff"];
 
 
     if (lastUpdate15 + 10000 < millis()){
