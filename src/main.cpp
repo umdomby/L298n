@@ -22,8 +22,8 @@ int speed = 85;
 
 unsigned long messageInterval = 2000;
 bool connected = false;
-//const char* websockets_server_host = "servicerobot.pro"; // Enter server adress
-const char* websockets_server_host = "192.168.0.101"; // Enter server adress
+const char* websockets_server_host = "servicerobot.pro"; // Enter server adress
+//const char* websockets_server_host = "192.168.0.101"; // Enter server adress
 //const char* websockets_server_host = "93.125.10.70"; // Enter server adress
 const uint16_t websockets_server_port = 8081; // Enter server port
 
@@ -67,13 +67,13 @@ void onMessageCallback(WebsocketsMessage messageSocket) {
         Serial.print(F("deserializeJson() failed: "));
         Serial.println(error.f_str());
         return;
-    }
+    };
 
     method = doc["method"];
 
     if(String(method) == "connection"){
         Serial.printf("[WSc] WStype_CONNECTED\n");
-    }
+    };
 
     if(String(method) == "messages"){
         connectByte = doc["connectByte"];
@@ -81,16 +81,14 @@ void onMessageCallback(WebsocketsMessage messageSocket) {
         connectByte = false;
         // stop = doc["stop"];
         // accel = doc["accel"];
-    }
+    };
 
     if(String(method) == "messagesLTRT"){
-        messageLT = doc["messageLT"];
-        messageRT = doc["messageRT"];
-        messageL = messageLT*255;
-        messageR = messageRT*255;
+        messageL = doc["messageL"];
+        messageR = doc["messageR"];
         Serial.printf("LT = %s\n", String(messageL));
         Serial.printf("RT = %s\n", String(messageR));
-    }
+    };
 
     if(String(method) == "messagesL"){
         stop = doc["stop"];
@@ -107,7 +105,7 @@ void onMessageCallback(WebsocketsMessage messageSocket) {
         doc2["messageR"] = messageR;
         String output = doc2.as<String>();
         client.send(output);
-    }
+    };
 
     if(String(method) == "messagesR"){
         stop = doc["stop"];
@@ -124,7 +122,7 @@ void onMessageCallback(WebsocketsMessage messageSocket) {
         doc2["messageR"] = messageR;
         String output = doc2.as<String>();
         client.send(output);
-    }
+    };
 
     if(String(method) == "messagesOnOff"){
         messageOnOff = doc["messageOnOff"];
@@ -133,8 +131,10 @@ void onMessageCallback(WebsocketsMessage messageSocket) {
         Serial.printf("OnOff = %s\n", String(messageOnOff));
         String output = doc2.as<String>();
         client.send(output);
+        messageL = 0;
+        messageR = 0;
         digitalWrite(ONOFF, messageOnOff);
-    }
+    };
     if(String(method) == "messagesStop"){
         messageStop = doc["messageStop"];
         doc2["method"] = "messagesStop";
@@ -143,27 +143,22 @@ void onMessageCallback(WebsocketsMessage messageSocket) {
         String output = doc2.as<String>();
         client.send(output);
         digitalWrite(STOP, messageStop);
-    }
-    if(String(method) == "messagesFBL"){
+    };
+    if(String(method) == "messagesFBLR"){
         messageFBL = doc["messageFBL"];
-        doc2["method"] = "messagesFBL";
+        messageFBR = doc["messageFBR"];
+        doc2["method"] = "messagesFBLR";
         doc2["messageFBL"] = messageFBL;
-        Serial.printf("UpDownLeft = %s\n", String(messageFBL));
+        doc2["messageFBR"] = messageFBR;
+        Serial.printf("UpDownLeft = %s", String(messageFBL));
+        Serial.printf(" UpDownRight = %s\n", String(messageFBR));
         String output = doc2.as<String>();
         client.send(output);
         digitalWrite(FBL, messageFBL);
-    }
-        if(String(method) == "messagesFBR"){
-        messageFBR = doc["messageFBR"];
-        doc2["method"] = "messagesFBR";
-        doc2["messageFBR"] = messageFBR;
-        Serial.printf("UpDownRight = %s\n", String(messageFBR));
-        String output = doc2.as<String>();
-        client.send(output);
-        digitalWrite(FBL, messageFBR);
-    }
+        digitalWrite(FBR, messageFBR);
+    };
 
-}
+};
 
 void onEventsCallback(WebsocketsEvent event, String data) {
     if(event == WebsocketsEvent::ConnectionOpened) {
@@ -315,32 +310,32 @@ void loop(){
     analogWrite(LPWM, messageL);
     analogWrite(RPWM, messageR);
 
-    if(messageL > 0 || messageR > 0){
-      if(messageFBL == true && messageFBR == true){
-          digitalWrite(FBL, HIGH);
-          digitalWrite(FBLL, LOW);
-          digitalWrite(FBR, HIGH);
-          digitalWrite(FBRR, LOW);
+    // if(messageL > 0 || messageR > 0){
+    //   if(messageFBL == true && messageFBR == true){
+    //       digitalWrite(FBL, HIGH);
+    //       digitalWrite(FBLL, LOW);
+    //       digitalWrite(FBR, HIGH);
+    //       digitalWrite(FBRR, LOW);
 
-      };
-      if(messageFBL == false && messageFBR == false){
-          digitalWrite(FBL, LOW);
-          digitalWrite(FBLL, HIGH);
-          digitalWrite(FBR, LOW);
-          digitalWrite(FBRR, HIGH);
-      };
-      if(messageFBL == true && messageFBR == false){
-          digitalWrite(FBL, HIGH);
-          digitalWrite(FBLL, LOW);
-          digitalWrite(FBR, LOW);
-          digitalWrite(FBRR, HIGH);
+    //   };
+    //   if(messageFBL == false && messageFBR == false){
+    //       digitalWrite(FBL, LOW);
+    //       digitalWrite(FBLL, HIGH);
+    //       digitalWrite(FBR, LOW);
+    //       digitalWrite(FBRR, HIGH);
+    //   };
+    //   if(messageFBL == true && messageFBR == false){
+    //       digitalWrite(FBL, HIGH);
+    //       digitalWrite(FBLL, LOW);
+    //       digitalWrite(FBR, LOW);
+    //       digitalWrite(FBRR, HIGH);
 
-      }; 
-      if(messageFBL == false && messageFBR == true){
-          digitalWrite(FBL, LOW);
-          digitalWrite(FBLL, HIGH);
-          digitalWrite(FBR, HIGH);
-          digitalWrite(FBRR, LOW);
-      };
-    };
+    //   }; 
+    //   if(messageFBL == false && messageFBR == true){
+    //       digitalWrite(FBL, LOW);
+    //       digitalWrite(FBLL, HIGH);
+    //       digitalWrite(FBR, HIGH);
+    //       digitalWrite(FBRR, LOW);
+    //   };
+    // };
 }
