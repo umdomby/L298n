@@ -1,6 +1,6 @@
 const char* ssid = "Robolab";
 const char* password = "wifi123123123";
-const char* idSocket = "12345";
+const char* idSocket = "1234567";
 int speed = 85;
 
 #include <Arduino.h>
@@ -22,8 +22,9 @@ int speed = 85;
 
 unsigned long messageInterval = 2000;
 bool connected = false;
-const char* websockets_server_host = "servicerobot.pro"; // Enter server adress
-//const char* websockets_server_host = "192.168.0.101"; // Enter server adress
+//const char* websockets_server_host = "servicerobot.pro"; // Enter server adress
+const char* websockets_server_host = "192.168.0.101"; // Enter server adress
+//const char* websockets_server_host = "93.125.10.70"; // Enter server adress
 const uint16_t websockets_server_port = 8081; // Enter server port
 
 using namespace websockets;
@@ -53,6 +54,7 @@ float messageRT = 0;
 // int posMessage = 90;
 // int posMessage2 = 90;
 int accel = 1;
+boolean connectByte = false;
 
 WebsocketsClient client;
 
@@ -74,50 +76,20 @@ void onMessageCallback(WebsocketsMessage messageSocket) {
     }
 
     if(String(method) == "messages"){
-        stop = doc["stop"];
-        accel = doc["accel"];
-
-        // messageL = doc["messageL"];
-        // messageR = doc["messageR"];
-        // doc2["method"] = "messages";
-        // doc2["messageL"] = messageL;
-        // doc2["messageR"] = messageR;
-        // String output = doc2.as<String>();
-        // client.send(output);
-
-
-        // message = message * 27;
-        // message2 = message2 * 75;
-        //message = message * 255;
-        //message2 = message2 * 255;
-        //message = map(message, 0, 0, 0, 255);
-        //message2 = map(message2, 0, 0, 0, 255);
-
-        // if(stop == 1){
-        //     // posMessage = message;
-        //     // posMessage2 = message;
-        //     analogWrite(RPWM, message);
-        //     analogWrite(RPWM, message2);
-        //     stop = 0;
-        // }
+        connectByte = doc["connectByte"];
+        lastUpdate2 = millis();
+        connectByte = false;
+        // stop = doc["stop"];
+        // accel = doc["accel"];
     }
 
     if(String(method) == "messagesLTRT"){
         messageLT = doc["messageLT"];
         messageRT = doc["messageRT"];
-        // if(messageL < 0){
-        //     messageL = (messageL * speed) * -1;
-        // }else{messageL = messageL * speed;}
-        //messageR = doc["messageR"];
         messageL = messageLT*255;
         messageR = messageRT*255;
         Serial.printf("LT = %s\n", String(messageL));
         Serial.printf("RT = %s\n", String(messageR));
-        // doc2["method"] = "messagesL";
-        // doc2["messageL"] = messageL;
-        // doc2["messageR"] = messageR;
-        // String output = doc2.as<String>();
-        // client.send(output);
     }
 
     if(String(method) == "messagesL"){
@@ -202,9 +174,7 @@ void onEventsCallback(WebsocketsEvent event, String data) {
         Serial.println("Connnection Closed");
     } else if(event == WebsocketsEvent::GotPing) {
         Serial.println("Got a Ping!");
-    } else if(event == WebsocketsEvent::GotPong) {
-        Serial.println("Got a Pong!");
-    }
+    };
 }
 
 
@@ -308,7 +278,7 @@ void loop(){
     if (lastUpdate2 + 2000 < millis()){  
         messageL = 0;
         messageR = 0;
-        Serial.println("astUpdate2");
+        Serial.println("lastUpdate2");
         lastUpdate2 = millis();
     };
 
@@ -317,8 +287,8 @@ void loop(){
         Serial.printf("millis() = %s", String(millis()));
         Serial.printf(", WiFi.status() = %s", String(WiFi.status()));
         Serial.printf(", WL_CONNECTED = %s", String(WL_CONNECTED));
-        Serial.printf(", connected = %s\n", String(connected));
-
+        Serial.printf(", connected = %s", String(connected));
+        Serial.printf(", connectByte = %s\n", String(connectByte));
 
         doc2["method"] = "messages";
         doc2["id"] = idSocket;
