@@ -4,20 +4,29 @@ const char* idSocket = "1234567";
 int speed = 85;
 
 #include <Arduino.h>
+#include "PinDefinitionsAndMore.h"
+#include "ServoEasing.hpp"
+
 #define ONOFF D0
 #define STOP D1
 
 #define LPWM D6
 #define FBL D2
-#define FBLL D7
+//#define FBLL D7
 
 #define RPWM D5
 #define FBR D3
-#define FBRR D8
+//#define FBRR D8
 
 #include <ArduinoWebsockets.h>
 #include <ESP8266WiFi.h>
 #include <ArduinoJson.h>
+
+
+ServoEasing Servo1;
+ServoEasing Servo2;
+
+#define START_DEGREE_VALUE  90 
 
 
 unsigned long messageInterval = 2000;
@@ -50,6 +59,8 @@ boolean messageFBL = true;
 boolean messageFBR = true;
 float messageL = 0;
 float messageR = 0;
+float messageLL = 0;
+float messageRR = 0;
 float messageLT = 0;
 float messageRT = 0;
 // int posMessage = 90;
@@ -91,6 +102,13 @@ void onMessageCallback(WebsocketsMessage messageSocket) {
         lastUpdate10 = millis();
         Serial.printf("LT = %s\n", String(messageL));
         Serial.printf("RT = %s\n", String(messageR));
+    };
+
+    if(String(method) == "messageFBLLRR"){
+        messageLL = doc["messageLL"];
+        messageRR = doc["messageRR"];
+        Serial.printf("LL = %s\n", String(messageLL));
+        Serial.printf("RR = %s\n", String(messageRR));
     };
 
     if(String(method) == "messagesL"){
@@ -196,21 +214,22 @@ void socketSetup(){
 
 void setup() {
 
+
     pinMode(RPWM,OUTPUT);
     pinMode(LPWM,OUTPUT);
     analogWrite(RPWM, 0);   
     analogWrite(LPWM, 0);
 
-
     pinMode(FBL,OUTPUT);
     pinMode(FBR,OUTPUT);
-    pinMode(FBLL,OUTPUT);
-    pinMode(FBRR,OUTPUT);
-
     digitalWrite(FBL, HIGH);
     digitalWrite(FBR, HIGH);
-    digitalWrite(FBLL, HIGH);
-    digitalWrite(FBRR, HIGH);
+
+    // pinMode(FBLL,OUTPUT);
+    // pinMode(FBRR,OUTPUT);
+    // analogWrite(FBLL, 0);
+    // analogWrite(FBRR, 0);
+
 
     pinMode(ONOFF, OUTPUT);
     digitalWrite(ONOFF, HIGH);
@@ -229,12 +248,17 @@ void setup() {
 
     socketSetup();
 
-    // message = message * 90;
-    // message2 = message2 * 90;
+    //servo
+    #if defined(__AVR_ATmega32U4__) || defined(SERIAL_USB) || defined(SERIAL_PORT_USBVIRTUAL)  || defined(ARDUINO_attiny3217)
+    delay(4000); // To be able to connect Serial monitor after reset or power up and before first print out. Do not wait for an attached Serial Monitor!
+    #endif
 
-    // message = map(message, 0, 90, 90, 180);
-    // message2 = map(message2, 0, 90, 90, 180);
-
+    if (Servo1.attach(SERVO1_PIN, START_DEGREE_VALUE) == INVALID_SERVO) {
+        Serial.println(F("Error attaching servo"));
+    }
+	if (Servo2.attach(SERVO2_PIN, START_DEGREE_VALUE) == INVALID_SERVO) {
+        Serial.println(F("Error attaching servo"));
+    }
 }
 
 // void socetConnected(){
@@ -277,7 +301,7 @@ void loop(){
         messageL = 0;
         messageR = 0;
         Serial.println("lastUpdate2");
-        //lastUpdate2 = millis();
+        lastUpdate2 = millis();
     };
 
     if (lastUpdate10 + 10000 < millis()){
@@ -285,7 +309,7 @@ void loop(){
         messageL = 0;
         messageR = 0;
         Serial.println("lastUpdate10");
-        //lastUpdate10 = millis();
+        lastUpdate10 = millis();
     };
 
     messageOnOff = doc["messageOnOff"];
@@ -323,32 +347,10 @@ void loop(){
     analogWrite(LPWM, messageL);
     analogWrite(RPWM, messageR);
 
-    // if(messageL > 0 || messageR > 0){
-    //   if(messageFBL == true && messageFBR == true){
-    //       digitalWrite(FBL, HIGH);
-    //       digitalWrite(FBLL, LOW);
-    //       digitalWrite(FBR, HIGH);
-    //       digitalWrite(FBRR, LOW);
+    Servo1.easeTo(messageLL,450);
+	Servo2.easeTo(messageRR,450);
 
-    //   };
-    //   if(messageFBL == false && messageFBR == false){
-    //       digitalWrite(FBL, LOW);
-    //       digitalWrite(FBLL, HIGH);
-    //       digitalWrite(FBR, LOW);
-    //       digitalWrite(FBRR, HIGH);
-    //   };
-    //   if(messageFBL == true && messageFBR == false){
-    //       digitalWrite(FBL, HIGH);
-    //       digitalWrite(FBLL, LOW);
-    //       digitalWrite(FBR, LOW);
-    //       digitalWrite(FBRR, HIGH);
+    // analogWrite(FBLL, messageLL);
+    // analogWrite(FBRR, messageRR);
 
-    //   }; 
-    //   if(messageFBL == false && messageFBR == true){
-    //       digitalWrite(FBL, LOW);
-    //       digitalWrite(FBLL, HIGH);
-    //       digitalWrite(FBR, HIGH);
-    //       digitalWrite(FBRR, LOW);
-    //   };
-    // };
 }
